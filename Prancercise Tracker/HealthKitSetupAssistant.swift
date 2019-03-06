@@ -25,7 +25,8 @@ class HealthKitSetupAssistant {
         let bodyMassIndex = HKObjectType.quantityType(forIdentifier: .bodyMassIndex),
         let bodyMass = HKObjectType.quantityType(forIdentifier: .bodyMass),
         let height = HKObjectType.quantityType(forIdentifier: .height),
-        let activeEnergy = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)
+        let activeEnergy = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)//,
+        //let meds = HKClinicalTypeIdentifier.medicationRecord()
         else {
             completion(false,HealthkitSetupError.dataTypeNotAvailable)
             return
