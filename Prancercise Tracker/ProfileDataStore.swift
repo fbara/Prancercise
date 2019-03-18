@@ -32,6 +32,52 @@ class ProfileDataStore {
             return (age, unwrappedBiologicalSex, unwrappedBloodType)
         }
     }
+    
+    // Takes in a sample type (height, weight, bmi, etc.).
+    // Then it builds a query to get the most recent sample for that type.
+    // If you pass in the sample type for height, you will get back your latest height entry
+    class func getMostRecentSample(for sampleType: HKSampleType, completion: @escaping (HKQuantitySample?, Error?) -> Swift.Void) {
+        // Use HKQuery to load the most recent samples.
+        let mostRecentPredicate = HKQuery.predicateForSamples(withStart: Date.distantPast, end: Date(), options: .strictEndDate)
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+        let limit = 1
+        let sampleQuery = HKSampleQuery(sampleType: sampleType, predicate: mostRecentPredicate, limit: limit, sortDescriptors: [sortDescriptor]) { (query, samples, error) in
+            // Always dispatch to the main thread when complete
+            DispatchQueue.main.async {
+                guard let samples = samples,
+                      let mostRecentSample = samples.first as? HKQuantitySample
+                    else {
+                        completion(nil, error)
+                        return
+                }
+                
+                completion(mostRecentSample, nil)
+            }
+        }
+        
+        HKHealthStore().execute(sampleQuery)
+    }
+    
+    class func saveBodyMassIndexSample(bodyMassIndex: Double, date: Date) {
+        // Make sure the body mass type exists
+        guard let bodyMassIndexType = HKQuantityType.quantityType(forIdentifier: .bodyMassIndex) else {
+            fatalError("Body Mass Index Type is no longer available in HealthKit")
+        }
+        
+        // Use the Count HKUnit to create a body mass quantity
+        let bodyMassQuantity = HKQuantity(unit: HKUnit.count(), doubleValue: bodyMassIndex)
+        let bodyMassIndexSample = HKQuantitySample(type: bodyMassIndexType, quantity: bodyMassQuantity, start: date, end: date)
+        
+        // Save the same to HealthKit
+        HKHealthStore().save(bodyMassIndexSample) { (success, error) in
+            if let error = error {
+                print("Error Saving BMI Sample: \(error.localizedDescription)")
+            } else {
+                print("Successfully saved BMI Sample")
+            }
+        }
+
+    }
   
 }
 

@@ -70,13 +70,66 @@ class ProfileViewController: UITableViewController {
         bloodTypeLabel.text = bloodType.stringRepresentation
     }
     
+    if let weight = userHealthProfile.weightInKilograms {
+        let weightFormatter = MassFormatter()
+        weightFormatter.isForPersonMassUse = true
+        weightLabel.text = weightFormatter.string(fromKilograms: weight)
+    }
+    
+    if let height = userHealthProfile.heightInMeters {
+        let heightFormatter = LengthFormatter()
+        heightFormatter.isForPersonHeightUse = true
+        heightLabel.text = heightFormatter.string(fromMeters: height)
+    }
+    
+    if let bodyMassIndex = userHealthProfile.bodyMassIndex {
+        bodyMassIndexLabel.text = String(format: "%.02f", bodyMassIndex)
+    }
+    
   }
   
   private func loadAndDisplayMostRecentHeight() {
+    // Use HealthKit to create the Height Sample Type
+    guard let heightSampleType = HKSampleType.quantityType(forIdentifier: .height) else {
+        print("Height Sample Type is no longer available in HealthKit")
+        return
+    }
+    
+    ProfileDataStore.getMostRecentSample(for: heightSampleType) { (sample, error) in
+        guard let sample = sample else {
+            if let error = error {
+                self.displayAlert(for: error)
+            }
+            return
+        }
+        
+        // Convert the height sample to meters, save to the profile model and update the user interface.
+        let heightInMeters = sample.quantity.doubleValue(for: HKUnit.meter())
+        self.userHealthProfile.heightInMeters = heightInMeters
+        self.updateLabels()
+    }
 
   }
   
   private func loadAndDisplayMostRecentWeight() {
+    // Use HealthKit to create the Height Sample Type
+    guard let weightSampleType = HKSampleType.quantityType(forIdentifier: .bodyMass) else {
+        print("Weight Sample Type is no longer available in HealthKit")
+        return
+    }
+    
+    ProfileDataStore.getMostRecentSample(for: weightSampleType) { (sample, error) in
+        guard let sample = sample else {
+            if let error = error {
+                self.displayAlert(for: error)
+            }
+            return
+        }
+        
+        let weightInKilograms = sample.quantity.doubleValue(for: HKUnit.gramUnit(with: .kilo))
+        self.userHealthProfile.weightInKilograms = weightInKilograms
+        self.updateLabels()
+    }
 
   }
   
