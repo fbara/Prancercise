@@ -134,6 +134,12 @@ class ProfileViewController: UITableViewController {
   }
   
   private func saveBodyMassIndexToHealthKit() {
+    guard let bodyMassIndex = userHealthProfile.bodyMassIndex else {
+        displayAlert(for: ProfileDataError.missingBodyMassIndex)
+        return
+    }
+    
+    ProfileDataStore.saveBodyMassIndexSample(bodyMassIndex: bodyMassIndex, date: Date())
     
   }
   
